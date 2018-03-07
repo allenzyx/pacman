@@ -87,49 +87,18 @@ def depthFirstSearch(problem):
     print "Start's successors:", problem.getSuccessors(problem.getStartState())
     """
     "*** YOUR CODE HERE ***"
-    from game import Directions
-    stack = util.Stack()
-    start = problem.getStartState()
-    goal = None
-    stack.push((start, Directions.STOP, 0, None)) # position, direction, cost, predecessor
-    predecessors = dict()
-    visited = set()
-    predecessors[start] = [None, Directions.STOP] # start's predecessor: None, direction stop
-    while not stack.isEmpty():
-        currentPosition, direction, cost, predecessor = stack.pop()
-        if currentPosition in visited:
-            continue
-        visited.add(currentPosition)
-        if problem.isGoalState(currentPosition):
-            goal = currentPosition
-            break
-        successors = [successor for successor in problem.getSuccessors(currentPosition) if successor[0] not in visited]
-        for successor in successors:
-            nextPosition, d, c = successor[0], successor[1], successor[2]
-            stack.push((nextPosition, d, c, currentPosition))
-            predecessors[nextPosition] = [currentPosition, d]
-
-    path = []
-    while True:
-        if goal == start:
-            break
-        parent, direction = predecessors[goal][0], predecessors[goal][1]
-        goal = parent
-        path.append(direction)
-
-    path = path[::-1]
-    return path
-
+    return search(problem, util.Stack())
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    return search(problem, util.Queue())
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    return search(problem, util.PriorityQueueWithFunction(lambda (pos, dir, cost, pred): cost))
+
 
 def nullHeuristic(state, problem=None):
     """
@@ -144,8 +113,35 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     util.raiseNotDefined()
 
 
-def search(problem, fringe, strategy):
-    util.raiseNotDefined()
+def search(problem, fringe):
+    from game import Directions
+    start = problem.getStartState()
+    goal = None
+    fringe.push((start, Directions.STOP, 0, None)) # position, direction, cost, predecessor
+    predecessors = dict()
+    while not fringe.isEmpty():
+        currentPosition, direction, cost, predecessor = fringe.pop()
+        if currentPosition in predecessors:
+            continue
+        predecessors[currentPosition] = [predecessor, direction]
+        if problem.isGoalState(currentPosition):
+            goal = currentPosition
+            break
+        successors = [successor for successor in problem.getSuccessors(currentPosition) if successor[0] not in predecessors]
+        for successor in successors:
+            nextPosition, d, c = successor[0], successor[1], successor[2]
+            fringe.push((nextPosition, d, c + cost, currentPosition))
+
+    path = []
+    while True:
+        if goal == start:
+            break
+        parent, direction = predecessors[goal][0], predecessors[goal][1]
+        goal = parent
+        path.append(direction)
+
+    path = path[::-1]
+    return path
 
 # Abbreviations
 bfs = breadthFirstSearch
