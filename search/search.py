@@ -87,7 +87,39 @@ def depthFirstSearch(problem):
     print "Start's successors:", problem.getSuccessors(problem.getStartState())
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    from game import Directions
+    stack = util.Stack()
+    start = problem.getStartState()
+    goal = None
+    stack.push((start, Directions.STOP, 0, None)) # position, direction, cost, predecessor
+    predecessors = dict()
+    visited = set()
+    predecessors[start] = [None, Directions.STOP] # start's predecessor: None, direction stop
+    while not stack.isEmpty():
+        currentPosition, direction, cost, predecessor = stack.pop()
+        if currentPosition in visited:
+            continue
+        visited.add(currentPosition)
+        if problem.isGoalState(currentPosition):
+            goal = currentPosition
+            break
+        successors = [successor for successor in problem.getSuccessors(currentPosition) if successor[0] not in visited]
+        for successor in successors:
+            nextPosition, d, c = successor[0], successor[1], successor[2]
+            stack.push((nextPosition, d, c, currentPosition))
+            predecessors[nextPosition] = [currentPosition, d]
+
+    path = []
+    while True:
+        if goal == start:
+            break
+        parent, direction = predecessors[goal][0], predecessors[goal][1]
+        goal = parent
+        path.append(direction)
+
+    path = path[::-1]
+    return path
+
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
@@ -111,6 +143,9 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     "*** YOUR CODE HERE ***"
     util.raiseNotDefined()
 
+
+def search(problem, fringe, strategy):
+    util.raiseNotDefined()
 
 # Abbreviations
 bfs = breadthFirstSearch
