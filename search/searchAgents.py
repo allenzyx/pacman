@@ -288,6 +288,9 @@ class CornersProblem(search.SearchProblem):
         # Please add any code here which you would like to use
         # in initializing the problem
         "*** YOUR CODE HERE ***"
+        self.cornerId = dict()
+        for id, corner in enumerate(self.corners):
+            self.cornerId[corner] = id
 
     def getStartState(self):
         """
@@ -295,14 +298,18 @@ class CornersProblem(search.SearchProblem):
         space)
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        cornersVisited = 0
+        # Maybe start at a corner
+        cornersVisited = self.tryFillingCorner(self.startingPosition, cornersVisited)
+        return self.startingPosition, cornersVisited
 
     def isGoalState(self, state):
         """
         Returns whether this search state is a goal state of the problem.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        position, cornersVisited = state
+        return cornersVisited == pow(2, len(self.corners)) - 1
 
     def getSuccessors(self, state):
         """
@@ -325,6 +332,15 @@ class CornersProblem(search.SearchProblem):
             #   hitsWall = self.walls[nextx][nexty]
 
             "*** YOUR CODE HERE ***"
+            currentPosition, cornersVisited = state
+            x, y = currentPosition
+            dx, dy = Actions.directionToVector(action)
+            nextx, nexty = int(x + dx), int(y + dy)
+            hitsWall = self.walls[nextx][nexty]
+            nextPosition = (nextx, nexty)
+            if not hitsWall:
+                newCornersVisited = self.tryFillingCorner(nextPosition, cornersVisited)
+                successors.append(((nextPosition, newCornersVisited), action, 1))
 
         self._expanded += 1 # DO NOT CHANGE
         return successors
@@ -341,6 +357,13 @@ class CornersProblem(search.SearchProblem):
             x, y = int(x + dx), int(y + dy)
             if self.walls[x][y]: return 999999
         return len(actions)
+
+    def tryFillingCorner(self, position, cornerVisited):
+        id = self.cornerId.get(position)
+        mask = 0
+        if id is not None:
+            mask = 1 << id
+        return cornerVisited | mask
 
 
 def cornersHeuristic(state, problem):
@@ -360,7 +383,21 @@ def cornersHeuristic(state, problem):
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
 
     "*** YOUR CODE HERE ***"
-    return 0 # Default to trivial solution
+    currentPosition, cornersVisited = state # position (x, y), visited: a integer bitwise
+    h = 0
+    while cornersVisited != pow(2, len(corners)) - 1:
+        closet = 999999
+        id = 0
+        for i, point in enumerate(corners):
+            if cornersVisited & (1 << i) == 0:
+                dist = abs(currentPosition[0] - point[0]) + abs(currentPosition[1] - point[1])
+                closet = min(closet, dist)
+                if closet == dist:
+                    id = i
+        h += closet
+        cornersVisited |= 1 << id
+        currentPosition = corners[id]
+    return h
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
